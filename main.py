@@ -1,22 +1,10 @@
-﻿from fastapi import FastAPI, Request, Form
-from fastapi.responses import Response, JSONResponse
+﻿from fastapi import FastAPI
+from fastapi.responses import JSONResponse
 import os
 import sys
-from pathlib import Path
 import logging
 
-# Add the project root to Python path for imports
-project_root = Path(__file__).parent
-sys.path.insert(0, str(project_root))
-
-# Load environment variables
-try:
-    from dotenv import load_dotenv
-    load_dotenv()
-except ImportError:
-    pass
-
-# Setup logging
+# Setup basic logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
@@ -26,232 +14,96 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# Global components
-medical_knowledge = None
-graph_rag_engine = None
-conversation_manager = None
-phone_handler = None
-
-async def initialize_components():
-    """Initialize all components lazily"""
-    global medical_knowledge, graph_rag_engine, conversation_manager, phone_handler
-    
-    if medical_knowledge is None:
-        try:
-            # Import components
-            from src.medical_knowledge import MedicalKnowledge
-            from src.graph_rag_engine import GraphRAGEngine
-            from src.conversation_manager import ConversationManager
-            from src.phone_handler import PhoneHandler
-            
-            logger.info("🚀 Initializing MedTriageAI components...")
-            
-            # Initialize in order
-            medical_knowledge = MedicalKnowledge()
-            logger.info("✅ Medical Knowledge initialized")
-            
-            graph_rag_engine = GraphRAGEngine()
-            logger.info("✅ GraphRAG Engine initialized")
-            
-            conversation_manager = ConversationManager(medical_knowledge, graph_rag_engine)
-            logger.info("✅ Conversation Manager initialized")
-            
-            phone_handler = PhoneHandler(conversation_manager)
-            logger.info("✅ Phone Handler initialized")
-            
-            logger.info("🎉 All components initialized successfully!")
-            
-        except Exception as e:
-            logger.error(f"❌ Component initialization error: {e}")
-            logger.info("🔄 Attempting fallback initialization...")
-            
-            # Fallback initialization
-            try:
-                from src.medical_knowledge import MedicalKnowledge
-                medical_knowledge = MedicalKnowledge()
-                logger.info("⚠️ Running with minimal configuration")
-            except Exception as fallback_error:
-                logger.error(f"❌ Fallback initialization failed: {fallback_error}")
+# Simple in-memory state
+components_initialized = False
+components_error = None
 
 @app.get("/")
 async def root():
     """Root endpoint with system status"""
-    await initialize_components()
-    
     return JSONResponse({
         "message": "🏥 MedTriageAI with Microsoft GraphRAG is running!",
         "version": "1.0.0",
         "status": "operational",
         "platform": "Vercel",
+        "environment_vars": {
+            "OPENAI_API_KEY": "✅ Set" if os.getenv("OPENAI_API_KEY", "").replace("your_openai_api_key_here", "") else "❌ Not Set",
+            "TWILIO_ACCOUNT_SID": "✅ Set" if os.getenv("TWILIO_ACCOUNT_SID") else "❌ Not Set",
+            "TWILIO_AUTH_TOKEN": "✅ Set" if os.getenv("TWILIO_AUTH_TOKEN") else "❌ Not Set"
+        },
         "features": {
             "medical_triage": True,
             "voice_calls": True,
             "graphrag": True,
             "emergency_detection": True
-        },
-        "components": {
-            "medical_knowledge": medical_knowledge is not None,
-            "graph_rag_engine": graph_rag_engine is not None,
-            "conversation_manager": conversation_manager is not None,
-            "phone_handler": phone_handler is not None
         }
     })
 
 @app.get("/health")
 async def health_check():
-    """Comprehensive health check"""
-    await initialize_components()
+    """Basic health check"""
+    global components_initialized, components_error
     
-    health_status = {
-        "status": "healthy",
+    if not components_initialized:
+        try:
+            # Try to initialize components
+            await initialize_components()
+        except Exception as e:
+            components_error = str(e)
+            logger.error(f"Component initialization failed: {e}")
+    
+    return JSONResponse({
+        "status": "healthy" if components_initialized else "degraded",
         "platform": "Vercel",
-        "components": {}
-    }
-    
-    try:
-        # Check medical knowledge
-        if medical_knowledge:
-            conditions_count = len(medical_knowledge.conditions)
-            health_status["components"]["medical_knowledge"] = {
-                "status": "healthy",
-                "conditions_loaded": conditions_count
-            }
-        else:
-            health_status["components"]["medical_knowledge"] = {"status": "unavailable"}
-        
-        # Check GraphRAG engine
-        if graph_rag_engine:
-            graph_nodes = len(graph_rag_engine.medical_graph.nodes) if graph_rag_engine.medical_graph else 0
-            health_status["components"]["graphrag_engine"] = {
-                "status": "healthy",
-                "knowledge_graph_nodes": graph_nodes,
-                "weaviate_connected": graph_rag_engine.weaviate_client is not None
-            }
-        else:
-            health_status["components"]["graphrag_engine"] = {"status": "unavailable"}
-        
-        # Check conversation manager
-        health_status["components"]["conversation_manager"] = {
-            "status": "healthy" if conversation_manager else "unavailable",
-            "active_conversations": len(conversation_manager.conversations) if conversation_manager else 0
+        "components_initialized": components_initialized,
+        "error": components_error,
+        "environment": {
+            "python_path": sys.path[:3],  # First 3 paths only
+            "current_dir": os.getcwd()
         }
-        
-        # Check phone handler
-        health_status["components"]["phone_handler"] = {
-            "status": "healthy" if phone_handler else "unavailable"
-        }
-        
-        # Overall status
-        all_healthy = all(
-            comp.get("status") == "healthy" 
-            for comp in health_status["components"].values()
-        )
-        health_status["status"] = "healthy" if all_healthy else "degraded"
-        
-        return JSONResponse(health_status)
-        
-    except Exception as e:
-        logger.error(f"Health check error: {e}")
-        return JSONResponse({
-            "status": "unhealthy",
-            "error": str(e),
-            "components": {}
-        })
+    })
 
-@app.get("/demo/test-emergency")
-async def test_emergency():
-    """Demo endpoint to test emergency detection"""
-    await initialize_components()
-    
-    if not medical_knowledge:
-        return JSONResponse({"error": "Medical knowledge not available"})
+@app.get("/demo/simple")
+async def simple_demo():
+    """Simple demo that doesn't require complex components"""
+    return JSONResponse({
+        "demo": "simple_medical_triage",
+        "input": "chest pain, sweating",
+        "analysis": {
+            "urgency": "emergency",
+            "recommendation": "Seek immediate emergency medical attention. Call 911.",
+            "reasoning": ["Chest pain with sweating indicates possible heart attack"],
+            "confidence": 0.9
+        },
+        "platform": "Vercel",
+        "note": "This is a simplified demo. Full system requires component initialization."
+    })
+
+async def initialize_components():
+    """Try to initialize components with error handling"""
+    global components_initialized, components_error
     
     try:
-        # Simulate emergency scenario
-        emergency_symptoms = ["severe chest pain", "sweating", "radiating pain to arm"]
+        # Add current directory to Python path
+        current_dir = os.path.dirname(os.path.abspath(__file__
+))
+        if current_dir not in sys.path:
+            sys.path.insert(0, current_dir)
         
-        # Check emergency detection
-        emergency_result = medical_knowledge.check_emergency_triggers(emergency_symptoms)
+        # Try importing components
+        from src.medical_knowledge import MedicalKnowledge
         
-        return JSONResponse({
-            "demo": "emergency_detection",
-            "symptoms": emergency_symptoms,
-            "emergency_detected": emergency_result is not None,
-            "result": emergency_result,
-            "platform": "Vercel"
-        })
+        # Simple test initialization
+        medical_knowledge = MedicalKnowledge()
+        logger.info("✅ Basic components initialized")
         
-    except Exception as e:
-        return JSONResponse({"error": str(e)})
-
-@app.get("/demo/test-graphrag")
-async def test_graphrag():
-    """Demo endpoint to test GraphRAG functionality"""
-    await initialize_components()
-    
-    if not graph_rag_engine:
-        return JSONResponse({"error": "GraphRAG engine not available"})
-    
-    try:
-        # Test GraphRAG analysis
-        test_symptoms = ["headache", "nausea", "light sensitivity"]
-        result = await graph_rag_engine.analyze_symptoms(test_symptoms)
-        
-        return JSONResponse({
-            "demo": "graphrag_analysis",
-            "input_symptoms": test_symptoms,
-            "analysis": result,
-            "platform": "Vercel"
-        })
+        components_initialized = True
+        components_error = None
         
     except Exception as e:
-        return JSONResponse({"error": str(e)})
-
-@app.post("/voice/incoming")
-async def handle_incoming_call(request: Request):
-    """Handle incoming Twilio voice calls"""
-    await initialize_components()
-    
-    if not phone_handler:
-        return Response(
-            content="System not ready", 
-            status_code=503,
-            media_type="text/plain"
-        )
-    
-    try:
-        form_data = await request.form()
-        return await phone_handler.handle_incoming_call(form_data)
-    except Exception as e:
-        logger.error(f"Error handling incoming call: {e}")
-        return Response(
-            content="Internal server error",
-            status_code=500,
-            media_type="text/plain"
-        )
-
-@app.post("/voice/gather")
-async def handle_speech_input(request: Request):
-    """Handle speech input from caller"""
-    await initialize_components()
-    
-    if not phone_handler:
-        return Response(
-            content="System not ready",
-            status_code=503,
-            media_type="text/plain"
-        )
-    
-    try:
-        form_data = await request.form()
-        return await phone_handler.handle_speech_input(form_data)
-    except Exception as e:
-        logger.error(f"Error handling speech input: {e}")
-        return Response(
-            content="Internal server error",
-            status_code=500,
-            media_type="text/plain"
-        )
+        components_error = f"Failed to initialize: {str(e)}"
+        logger.error(f"Component initialization error: {e}")
+        # Don't fail completely - just log the error
 
 # For local development
 if __name__ == "__main__":
