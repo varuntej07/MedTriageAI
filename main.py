@@ -242,6 +242,9 @@ async def test_graphrag():
     except Exception as e:
         return {"error": str(e)}
 
+# Vercel handler
+handler = app
+
 if __name__ == "__main__":
     port = int(os.getenv("PORT", 8000))
     uvicorn.run(
