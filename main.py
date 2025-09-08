@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Request, Form
+﻿from fastapi import FastAPI, Request, Form
 from fastapi.responses import Response
 import os
 from dotenv import load_dotenv
@@ -34,7 +34,7 @@ async def startup_event():
     global medical_knowledge, graph_rag_engine, conversation_manager, phone_handler
     
     try:
-        logger.info("?? Starting MedTriageAI with GraphRAG...")
+        logger.info("🚀 Starting MedTriageAI with GraphRAG...")
         
         # Check for required environment variables
         missing_vars = []
@@ -46,32 +46,32 @@ async def startup_event():
             missing_vars.append("TWILIO_AUTH_TOKEN")
         
         if missing_vars:
-            logger.warning(f"??  Missing environment variables: {', '.join(missing_vars)}")
+            logger.warning(f"⚠️  Missing environment variables: {', '.join(missing_vars)}")
             logger.warning("Some features may be limited. Please check your .env file.")
         
         # Initialize components
         medical_knowledge = MedicalKnowledge()
-        logger.info("? Medical Knowledge initialized")
+        logger.info("✅ Medical Knowledge initialized")
         
         graph_rag_engine = GraphRAGEngine()
-        logger.info("? GraphRAG Engine initialized")
+        logger.info("✅ GraphRAG Engine initialized")
         
         conversation_manager = ConversationManager(medical_knowledge, graph_rag_engine)
-        logger.info("? Conversation Manager initialized")
+        logger.info("✅ Conversation Manager initialized")
         
         phone_handler = PhoneHandler(conversation_manager)
-        logger.info("? Phone Handler initialized")
+        logger.info("✅ Phone Handler initialized")
         
-        logger.info("?? MedTriageAI startup complete!")
+        logger.info("🎉 MedTriageAI startup complete!")
         
     except Exception as e:
-        logger.error(f"? Startup error: {e}")
+        logger.error(f"❌ Startup error: {e}")
         # Don't fail startup completely - create minimal components
         medical_knowledge = MedicalKnowledge()
         graph_rag_engine = GraphRAGEngine()
         conversation_manager = ConversationManager(medical_knowledge, graph_rag_engine)
         phone_handler = PhoneHandler(conversation_manager)
-        logger.warning("??  Started with minimal configuration")
+        logger.warning("⚠️  Started with minimal configuration")
 
 @app.on_event("shutdown")
 async def shutdown_event():
@@ -79,7 +79,7 @@ async def shutdown_event():
     try:
         if graph_rag_engine:
             await graph_rag_engine.shutdown()
-        logger.info("? Shutdown complete")
+        logger.info("✅ Shutdown complete")
     except Exception as e:
         logger.error(f"Error during shutdown: {e}")
 
@@ -87,7 +87,7 @@ async def shutdown_event():
 async def root():
     """Root endpoint with system status"""
     return {
-        "message": "?? MedTriageAI with Microsoft GraphRAG is running!",
+        "message": "🏥 MedTriageAI with Microsoft GraphRAG is running!",
         "version": "1.0.0",
         "status": "operational",
         "features": {
