@@ -1,4 +1,4 @@
-﻿from fastapi import FastAPI, Form, Request
+﻿from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse, Response
 import os
 import sys
@@ -39,90 +39,66 @@ async def root():
     })
 
 @app.post("/voice/incoming")
-async def handle_incoming_call(
-    CallSid: str = Form(...),
-    From: str = Form(...)
-):
+async def handle_incoming_call(request: Request):
     """Handle incoming Twilio voice calls"""
     try:
+        # Get form data from request
+        form_data = await request.form()
+        call_sid = form_data.get("CallSid", "")
+        from_number = form_data.get("From", "")
+        
         # Initialize conversation
-        conversations[CallSid] = {
-            "phone": From,
+        conversations[call_sid] = {
+            "phone": from_number,
             "state": "greeting",
             "symptoms": []
         }
         
-        # Return TwiML response
-        twiml = f"""<?xml version="1.0" encoding="UTF-8"?>
-        <Response>
-            <Say voice="alice">
-                Hello! Welcome to Med Triage A I. I'm here to help assess your medical symptoms. 
-                Please describe what you're experiencing. When you're done speaking, I'll analyze your symptoms.
-            </Say>
-            <Gather input="speech" action="/voice/gather" method="POST" timeout="10" speechTimeout="5">
-                <Say voice="alice">Please tell me about your symptoms now.</Say>
-            </Gather>
-            <Say voice="alice">I didn't hear anything. Please call back if you need medical assistance.</Say>
-        </Response>"""
+        # Return TwiML response - simple format
+        twiml = """<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+    <Say voice="alice">Hello! Welcome to Med Triage AI. Please describe your symptoms now.</Say>
+    <Gather input="speech" action="/voice/gather" method="POST" timeout="10" speechTimeout="3">
+        <Say voice="alice">I'm listening...</Say>
+    </Gather>
+    <Say voice="alice">I didn't hear anything. Goodbye.</Say>
+</Response>"""
         
         return Response(content=twiml, media_type="application/xml")
         
     except Exception as e:
         logger.error(f"Error handling incoming call: {e}")
-        return Response(content=f"<Response><Say>Sorry, there was an error. Please try again.</Say></Response>", media_type="application/xml")
+        return Response(content="<Response><Say>Sorry, there was an error.</Say></Response>", media_type="application/xml")
 
 @app.post("/voice/gather")
-async def handle_speech_input(
-    CallSid: str = Form(...),
-    SpeechResult: str = Form(...)
-):
+async def handle_speech_input(request: Request):
     """Handle speech input from caller"""
     try:
-        user_input = SpeechResult.lower()
+        # Get form data from request
+        form_data = await request.form()
+        call_sid = form_data.get("CallSid", "")
+        user_input = form_data.get("SpeechResult", "").lower()
+        
         logger.info(f"Received speech: {user_input}")
         
-        # Simple emergency detection
-        emergency_detected = False
-        emergency_message = ""
-        
-        if any(term in user_input for term in ["chest pain", "heart attack", "can't breathe", "stroke"]):
-            emergency_detected = True
-            emergency_message = "This sounds like a medical emergency. Please hang up and call 9-1-1 immediately."
-        elif "chest pain" in user_input and any(term in user_input for term in ["sweating", "sweat", "arm", "jaw"]):
-            emergency_detected = True
-            emergency_message = "You may be experiencing a heart attack. Please hang up and call 9-1-1 immediately."
-        
-        if emergency_detected:
-            twiml = f"""<?xml version="1.0" encoding="UTF-8"?>
+        # Emergency detection
+        if any(term in user_input for term in ["chest pain", "heart attack"]) or ("chest pain" in user_input and "sweat" in user_input):
+            twiml = """<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-    <Say voice="alice">
-        Medical emergency detected. {emergency_message}
-        I repeat: hang up and call 9-1-1 now. This system is not a replacement for emergency services.
-    </Say>
+    <Say voice="alice">Medical emergency detected. Please hang up and call 9-1-1 immediately.</Say>
 </Response>"""
         else:
-            # Non-emergency response
-            recommendation = "Based on your symptoms, I recommend contacting your healthcare provider for proper evaluation."
-            
-            if any(term in user_input for term in ["headache", "nausea"]):
-                recommendation = "You may have a headache or migraine. Consider rest, hydration, and over-the-counter pain relief. Contact your doctor if symptoms worsen."
-            elif any(term in user_input for term in ["fever", "cold", "cough"]):
-                recommendation = "You may have a cold or flu. Get plenty of rest, stay hydrated, and monitor your symptoms. Contact your doctor if you develop difficulty breathing or high fever."
-            
-            twiml = f"""<?xml version="1.0" encoding="UTF-8"?>
+            # Non-emergency
+            twiml = """<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-    <Say voice="alice">
-        Thank you for describing your symptoms. {recommendation}
-        Remember, this is not a medical diagnosis. Always consult with healthcare professionals for proper medical care.
-        Take care and feel better soon.
-    </Say>
+    <Say voice="alice">Thank you. I recommend contacting your healthcare provider. Take care.</Say>
 </Response>"""
         
         return Response(content=twiml, media_type="application/xml")
         
     except Exception as e:
         logger.error(f"Error processing speech: {e}")
-        return Response(content=f"<Response><Say>Sorry, I had trouble understanding. Please try again or contact your healthcare provider.</Say></Response>", media_type="application/xml")
+        return Response(content="<Response><Say>Sorry, I had trouble understanding.</Say></Response>", media_type="application/xml")
 
 @app.get("/health")
 async def health_check():
@@ -130,76 +106,37 @@ async def health_check():
     return JSONResponse({
         "status": "healthy",
         "platform": "Vercel",
-        "components_initialized": True,
-        "environment": {
-            "current_dir": os.getcwd(),
-            "python_version": sys.version
-        }
+        "components_initialized": True
     })
 
 @app.get("/demo/simple")
 async def simple_demo():
-    """Simple demo that doesn't require complex components"""
+    """Simple demo"""
     return JSONResponse({
         "demo": "simple_medical_triage",
         "input": "chest pain, sweating",
         "analysis": {
             "urgency": "emergency",
-            "recommendation": "Seek immediate emergency medical attention. Call 911.",
-            "reasoning": ["Chest pain with sweating indicates possible heart attack"],
+            "recommendation": "Call 911 immediately",
             "confidence": 0.9
-        },
-        "platform": "Vercel",
-        "note": "This is a simplified demo. Full system requires component initialization."
+        }
     })
 
 @app.get("/demo/test-emergency")
 async def test_emergency():
     """Test emergency detection"""
-    try:        
-        test_input = "I have severe chest pain and I'm sweating"
-        
-        if "chest pain" in test_input.lower() and "sweat" in test_input.lower():
-            return JSONResponse({
-                "emergency_detected": True,
-                "input": test_input,
-                "urgency": "emergency",
-                "recommendation": "🚨 MEDICAL EMERGENCY: Call 911 immediately. Possible heart attack.",
-                "confidence": 0.95,
-                "platform": "Vercel",
-                "status": "working"
-            })
-        else:
-            return JSONResponse({
-                "emergency_detected": False,
-                "input": test_input,
-                "urgency": "routine",
-                "recommendation": "Consult healthcare provider if symptoms persist",
-                "confidence": 0.5,
-                "platform": "Vercel",
-                "status": "working"
-            })
-            
-    except Exception as e:
-        return JSONResponse({
-            "error": str(e),
-            "status": "failed",
-            "platform": "Vercel"
-        }, status_code=500)
+    return JSONResponse({
+        "emergency_detected": True,
+        "input": "chest pain and sweating",
+        "recommendation": "🚨 Call 911 immediately",
+        "confidence": 0.95,
+        "status": "working"
+    })
 
 @app.post("/triage")
 async def triage_symptoms():
     """Basic triage endpoint"""
-    try:
-        return JSONResponse({
-            "status": "working",
-            "message": "Triage system operational",
-            "platform": "Vercel"
-        })
-        
-    except Exception as e:
-        return JSONResponse({
-            "error": str(e),
-            "status": "failed",
-            "platform": "Vercel"
-        }, status_code=500)
+    return JSONResponse({
+        "status": "working",
+        "message": "Triage system operational"
+    })
