@@ -1,0 +1,19 @@
+TITLE: Fever in Adults
+SOURCE: MedlinePlus
+SECTION: MedlinePlus: FullSummary
+BODY: Fever is a temperature of 100.4F (38C) or higher. It's usually a sign that your body is fighting an infection.
+            
+            Common causes include:
+            - Viral infections (like colds or flu)
+            - Bacterial infections
+            - Heat exhaustion
+            - Certain medications
+            - Inflammatory conditions
+            
+            When to seek immediate care:
+            - Temperature over 103F (39.4C)
+            - Fever with severe headache, stiff neck, confusion, or difficulty breathing
+            - Signs of dehydration
+            - Fever that lasts more than 3 days
+            
+            Treatment typically involves rest, fluids, and fever-reducing medications like acetaminophen or ibuprofen.

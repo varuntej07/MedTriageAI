@@ -1,0 +1,21 @@
+{
+  "llm": {
+    "api_key": "${OPENAI_API_KEY}",
+    "type": "openai_chat",
+    "model": "gpt-3.5-turbo",
+    "temperature": 0.1,
+    "max_tokens": 1500
+  },
+  "embeddings": {
+    "api_key": "${OPENAI_API_KEY}",
+    "type": "openai_embedding",
+    "model": "text-embedding-ada-002"
+  },
+  "input": {
+    "base_dir": "medical/input",
+    "file_type": "text"
+  },
+  "storage": {
+    "type": "memory"
+  }
+}

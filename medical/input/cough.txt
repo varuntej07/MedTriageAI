@@ -1,0 +1,24 @@
+TITLE: Cough
+SOURCE: MedlinePlus
+SECTION: MedlinePlus: FullSummary
+BODY: A cough is a reflex that helps clear your airways of mucus, irritants, and foreign particles.
+            
+            Types of coughs:
+            - Dry cough: No mucus production
+            - Productive cough: Brings up mucus or phlegm
+            - Acute: Lasts less than 3 weeks
+            - Chronic: Lasts more than 8 weeks
+            
+            Common causes:
+            - Viral infections (common cold, flu)
+            - Bacterial infections
+            - Allergies
+            - Asthma
+            - GERD (acid reflux)
+            
+            Seek medical attention if:
+            - Cough produces blood
+            - Difficulty breathing
+            - High fever
+            - Cough lasts more than 3 weeks
+            - Wheezing or chest pain

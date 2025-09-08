@@ -1,0 +1,19 @@
+TITLE: Headache
+SOURCE: MedlinePlus
+SECTION: MedlinePlus: FullSummary
+BODY: Headaches are one of the most common health complaints. Most are not serious, but some require immediate attention.
+            
+            Types:
+            - Tension headaches: Most common, feel like a tight band around head
+            - Migraines: Severe, often with nausea and light sensitivity
+            - Cluster headaches: Severe pain around one eye
+            - Secondary headaches: Caused by underlying condition
+            
+            Red flag symptoms requiring immediate care:
+            - Sudden, severe headache (worst headache of my life)
+            - Headache with fever and stiff neck
+            - Headache after head injury
+            - Sudden headache with confusion, vision changes, or weakness
+            - Headache that gets progressively worse
+            
+            Most headaches can be treated with rest, hydration, and over-the-counter pain relievers.

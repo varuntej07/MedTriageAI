@@ -1,0 +1,24 @@
+TITLE: Diarrhea
+SOURCE: MedlinePlus
+SECTION: MedlinePlus: FullSummary
+BODY: Diarrhea is loose, watery stools occurring more frequently than normal.
+            
+            Common causes:
+            - Viral infections
+            - Bacterial infections
+            - Food poisoning
+            - Medications (especially antibiotics)
+            - Food intolerances
+            - Inflammatory bowel disease
+            
+            Types:
+            - Acute: Lasts 1-2 days, usually viral
+            - Persistent: Lasts 2-4 weeks
+            - Chronic: Lasts more than 4 weeks
+            
+            Seek medical care for:
+            - Signs of severe dehydration
+            - Blood or mucus in stool
+            - High fever (over 102F)
+            - Severe abdominal or rectal pain
+            - Diarrhea lasting more than 3 days

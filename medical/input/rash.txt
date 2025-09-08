@@ -1,0 +1,20 @@
+TITLE: Rash
+SOURCE: MedlinePlus
+SECTION: MedlinePlus: FullSummary
+BODY: A rash is a change in the skin's color, appearance, or texture. Rashes can be localized or widespread.
+            
+            Common types:
+            - Contact dermatitis: From irritants or allergens
+            - Eczema: Chronic inflammatory skin condition
+            - Heat rash: From blocked sweat ducts
+            - Viral rashes: Associated with infections
+            
+            Concerning features requiring immediate care:
+            - Rapid spread
+            - Associated with difficulty breathing
+            - High fever
+            - Purple spots that don't blanch
+            - Signs of infection (pus, red streaking)
+            - Severe itching affecting sleep
+            
+            Most rashes are minor and resolve on their own or with basic care.
