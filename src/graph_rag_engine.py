@@ -23,7 +23,7 @@ try:
     OPENAI_AVAILABLE = True
 except ImportError:
     OPENAI_AVAILABLE = False
-    logger.warning("?? OpenAI library not available")
+    logger.warning("OpenAI library not available")
 
 class GraphRAGEngine:
     """Microsoft GraphRAG-inspired engine for medical knowledge reasoning"""
@@ -42,14 +42,16 @@ class GraphRAGEngine:
             except Exception as e:
                 logger.error(f"Failed to initialize OpenAI client: {e}")
         else:
-            logger.warning("?? OpenAI API key not found or not available - using fallback analysis")
+            logger.warning("OpenAI API key not found or not available - using fallback analysis")
         
         # Initialize Weaviate vector database (optional)
         if WEAVIATE_AVAILABLE:
             self._initialize_weaviate()
+            logger.info("Initializing Weaviate client...")
         
         # Initialize medical knowledge graph
         self._initialize_medical_graph()
+        logger.info("Initializing medical knowledge graph...")
     
     def _initialize_weaviate(self):
         """Initialize Weaviate vector database connection"""

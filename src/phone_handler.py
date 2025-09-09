@@ -43,7 +43,7 @@ class PhoneHandler:
             call_sid = form_data.get("CallSid", "demo_call")
             caller_number = form_data.get("From", "unknown")
             
-            logger.info(f"?? Incoming call: {call_sid} from {caller_number}")
+            logger.info(f"📞 Incoming call: {call_sid} from {caller_number}")
             
             # Start new conversation
             conversation = self.conversation_manager.start_conversation(call_sid, caller_number)
@@ -53,7 +53,7 @@ class PhoneHandler:
             
             # Welcome message
             welcome_message = (
-                "Hello, you've reached MedTriageAI, Please describe what's bothering you today."
+                "Hello, I'm your medical assistant. Describe what's bothering you today."
             )
             
             response.say(welcome_message, voice="alice")
@@ -61,15 +61,18 @@ class PhoneHandler:
             # Gather user input
             gather = response.gather(
                 input="speech",
-                timeout=10,
+                timeout=15,
                 speech_timeout="auto",
                 action=f"{self.base_url}/voice/gather",
-                method="POST"
+                method="POST",
+                language="en-US",  # Explicit language setting
+                profanity_filter="false"  # Disable profanity filter for medical terms
             )
-            gather.say("I'm listening. Please describe your symptoms", voice="alice")
+            gather.say("I'm listening...", voice="alice")
             
             # Fallback if no input received
-            response.say("I didn't hear anything. Please call back if you need medical assistance.")
+            response.say("I didn't hear you. can you repeat it clearly.")
+            response.say("If this is an emergency, please hang up and call 9-1-1 immediately.")
             response.hangup()
             
             return response
@@ -85,10 +88,16 @@ class PhoneHandler:
             speech_result = form_data.get("SpeechResult", "")
             confidence = float(form_data.get("Confidence", 0.0))
             
-            logger.info(f"?? Speech input for {call_sid}: '{speech_result}' (confidence: {confidence})")
+            logger.info(f"🗣️ Speech input for {call_sid}: '{speech_result}' (confidence: {confidence})")
             
-            # Handle low confidence speech
-            if confidence < 0.3:
+            # Handle low confidence speech - lowered threshold
+            if confidence < 0.2:
+                logger.warning(f"Low confidence speech: {confidence}")
+                return self._handle_unclear_speech()
+            
+            # Log empty speech result
+            if not speech_result.strip():
+                logger.warning("Empty speech result received")
                 return self._handle_unclear_speech()
             
             # Process input through conversation manager
@@ -123,12 +132,13 @@ class PhoneHandler:
             # Ask if they need anything else
             gather = response.gather(
                 input="speech",
-                timeout=5,
+                timeout=8,
                 speech_timeout="auto",
-                action=f"{self.base_url}voice/gather",
-                method="POST"
+                action=f"{self.base_url}/voice/gather",
+                method="POST",
+                language="en-US"
             )
-            gather.say("Is there anything else I can help you with today?")
+            gather.say("Is there anything else I can help you with today?", voice="alice")
             
             # End call if no response
             response.say("Thank you for using MedTriageAI. Take care and seek medical attention if your condition worsens.")
@@ -142,28 +152,30 @@ class PhoneHandler:
                 input="speech",
                 timeout=15,
                 speech_timeout="auto",
-                action=f"{self.base_url}voice/gather",
-                method="POST"
+                action=f"{self.base_url}/voice/gather",
+                method="POST",
+                language="en-US"
             )
             
             # Timeout fallback
-            response.say("I didn't hear a response. Let me ask again: Can you describe your symptoms?")
+            response.say("I didn't hear a response. Let me ask again: Can you describe your symptoms?", voice="alice")
             
             gather2 = response.gather(
                 input="speech",
-                timeout=10,
+                timeout=12,
                 speech_timeout="auto",
-                action=f"{self.base_url}voice/gather",
-                method="POST"
+                action=f"{self.base_url}/voice/gather",
+                method="POST",
+                language="en-US"
             )
             
-            response.say("I'm having trouble hearing you. Please call back when you can speak clearly.")
+            response.say("I'm having trouble hearing you. Please call back when you can speak clearly.", voice="alice")
             response.hangup()
             
         elif action == "end_call":
             # End the call
             response.say(message, voice="alice")
-            response.say("Thank you for calling. Please seek appropriate medical care. Goodbye.")
+            response.say("Thank you for calling. Please seek appropriate medical care. Goodbye.", voice="alice")
             response.hangup()
             
         else:
@@ -177,17 +189,18 @@ class PhoneHandler:
         """Handle cases where speech recognition confidence is low"""
         response = VoiceResponse()
         
-        response.say("I had trouble understanding what you said. Please speak clearly and describe your main symptoms.")
+        response.say("I had trouble understanding what you said. Please speak clearly and describe your main symptoms.", voice="alice")
         
         gather = response.gather(
             input="speech",
-            timeout=10,
+            timeout=12,
             speech_timeout="auto",
-            action=f"{self.base_url}voice/gather",
-            method="POST"
+            action=f"{self.base_url}/voice/gather",
+            method="POST",
+            language="en-US"
         )
         
-        response.say("I'm still having trouble hearing you. Please call back when you can speak more clearly.")
+        response.say("I'm still having trouble hearing you. Please call back when you can speak more clearly.", voice="alice")
         response.hangup()
         
         return response
@@ -198,8 +211,9 @@ class PhoneHandler:
         
         response.say(
             "I'm sorry, there's a technical issue with our system right now. "
-            "If this is a medical emergency, please hang up and call 911 immediately. "
-            "Otherwise, please try calling back in a few minutes."
+            "If this is an emergency, please hang up and call 911 immediately. "
+            "Otherwise, try calling back in a few minutes.",
+            voice="alice"
         )
         response.hangup()
         

@@ -124,6 +124,8 @@ async def handle_speech_input(request: Request):
             form_data = await request.form()
             user_input = form_data.get("SpeechResult", "").lower()
             
+            logger.info(f"📞 Fallback processing speech: '{user_input}'")
+            
             # Simple emergency detection
             if any(term in user_input for term in ["chest pain", "heart pain", "heart attack"]) and any(term in user_input for term in ["sweat", "sweating"]):
                 twiml = '<Response><Say voice="alice">Medical emergency detected. Please hang up and call 9-1-1 immediately.</Say></Response>'
@@ -135,12 +137,25 @@ async def handle_speech_input(request: Request):
             return Response(content=twiml, media_type="application/xml")
         
         form_data = await request.form()
+        
+        # Log all received parameters for debugging
+        logger.info(f"📞 Received form data: {dict(form_data)}")
+        
+        speech_result = form_data.get("SpeechResult", "")
+        confidence = form_data.get("Confidence", "0.0")
+        call_sid = form_data.get("CallSid", "unknown")
+        
+        logger.info(f"🗣️ Processing speech - CallSid: {call_sid}, Speech: '{speech_result}', Confidence: {confidence}")
+        
         twiml_response = await phone_handler.handle_speech_input(form_data)
+        logger.info(f"✅ Generated TwiML response: {str(twiml_response)[:200]}...")
+
         return Response(content=str(twiml_response), media_type="application/xml")
     except Exception as e:
-        logger.error(f"Error processing speech: {e}")
+        logger.error(f"❌ Error processing speech: {e}")
+        logger.exception("Full speech processing error:")
         return Response(
-            content='<Response><Say voice="alice">Sorry, I had trouble understanding. Please try again.</Say></Response>',
+            content='<Response><Say voice="alice">Sorry, I had trouble understanding. Try calling back.</Say></Response>',
             media_type="application/xml"
         )
 
