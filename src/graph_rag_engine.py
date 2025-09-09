@@ -35,7 +35,7 @@ class GraphRAGEngine:
         
         # Initialize OpenAI client
         openai_api_key = os.getenv("OPENAI_API_KEY")
-        if openai_api_key and openai_api_key != "your_openai_api_key_here" and OPENAI_AVAILABLE:
+        if openai_api_key:
             try:
                 self.openai_client = OpenAI(api_key=openai_api_key)
                 logger.info("? OpenAI client initialized")
