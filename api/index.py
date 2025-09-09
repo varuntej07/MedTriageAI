@@ -1,10 +1,27 @@
 ﻿from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse, Response
 import os
+import sys
 import logging
+
+# Add the project root directory to Python path for imports
+# Get the directory containing this file (api), then go up one level to get project root
+current_dir = os.path.dirname(os.path.abspath(__file__))
+project_root = os.path.dirname(current_dir)
+
+if project_root not in sys.path:
+    sys.path.insert(0, project_root)
+    
+# Also add current directory to path
+if current_dir not in sys.path:
+    sys.path.insert(0, current_dir)
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+logger.info(f"🔍 Project root: {project_root}")
+logger.info(f"🔍 Current dir: {current_dir}")
+logger.info(f"🔍 Python path: {sys.path[:3]}...")
 
 app = FastAPI(
     title="MedTriageAI",
@@ -19,33 +36,40 @@ _conversation_manager = None
 _phone_handler = None
 
 def get_components():
-    """Lazy initialize components only when needed"""
     global _medical_knowledge, _graph_rag_engine, _conversation_manager, _phone_handler
-    
     if _phone_handler is None:
         try:
-            # Add current directory to Python path
-            import sys
-            current_dir = os.path.dirname(os.path.abspath(__file__))
-            parent_dir = os.path.dirname(current_dir)
-            if parent_dir not in sys.path:
-                sys.path.insert(0, parent_dir)
+            logger.info("🔄 Initializing components...")
             
+            logger.info("📚 Importing MedicalKnowledge...")
             from src.medical_knowledge import MedicalKnowledge
-            from src.graph_rag_engine import GraphRAGEngine
-            from src.conversation_manager import ConversationManager
-            from src.phone_handler import PhoneHandler
-            
             _medical_knowledge = MedicalKnowledge()
-            _graph_rag_engine = GraphRAGEngine()
-            _conversation_manager = ConversationManager(_medical_knowledge, _graph_rag_engine)
-            _phone_handler = PhoneHandler(_conversation_manager)
+            logger.info("✅ MedicalKnowledge initialized")
             
-            logger.info("✅ Components initialized successfully")
-        except Exception as e:
-            logger.error(f"Failed to initialize components: {e}")
+            logger.info("🧠 Importing GraphRAGEngine...")
+            from src.graph_rag_engine import GraphRAGEngine  
+            _graph_rag_engine = GraphRAGEngine()
+            logger.info("✅ GraphRAGEngine initialized")
+            
+            logger.info("💬 Importing ConversationManager...")
+            from src.conversation_manager import ConversationManager
+            _conversation_manager = ConversationManager(_medical_knowledge, _graph_rag_engine)
+            logger.info("✅ ConversationManager initialized")
+            
+            logger.info("📞 Importing PhoneHandler...")
+            from src.phone_handler import PhoneHandler
+            _phone_handler = PhoneHandler(_conversation_manager)
+            logger.info("✅ PhoneHandler initialized")
+            
+            logger.info("✅ All components initialized successfully")
+        except ImportError as e:
+            logger.error(f"❌ Import error during component initialization: {e}")
+            logger.exception("Full import error traceback:")
             return None
-    
+        except Exception as e:
+            logger.error(f"❌ Error during component initialization: {e}")
+            logger.exception("Full error traceback:")
+            return None
     return _phone_handler
 
 @app.get("/")

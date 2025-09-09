@@ -3,19 +3,27 @@ import json
 import logging
 from typing import Dict, List, Optional, Any
 import networkx as nx
-import openai
 import asyncio
 from datetime import datetime
 
-# Import Weaviate client (comment out if not using)
+logger = logging.getLogger(__name__)
+
+# Try to import weaviate, but make it optional
 try:
     import weaviate
     WEAVIATE_AVAILABLE = True
+    logger.info("? Weaviate library available")
 except ImportError:
     WEAVIATE_AVAILABLE = False
-    weaviate = None
+    logger.info("?? Weaviate library not available - using local knowledge graph only")
 
-logger = logging.getLogger(__name__)
+# Try to import OpenAI
+try:
+    from openai import OpenAI
+    OPENAI_AVAILABLE = True
+except ImportError:
+    OPENAI_AVAILABLE = False
+    logger.warning("?? OpenAI library not available")
 
 class GraphRAGEngine:
     """Microsoft GraphRAG-inspired engine for medical knowledge reasoning"""
@@ -27,11 +35,14 @@ class GraphRAGEngine:
         
         # Initialize OpenAI client
         openai_api_key = os.getenv("OPENAI_API_KEY")
-        if openai_api_key:
-            self.openai_client = openai.OpenAI(api_key=openai_api_key)
-            logger.info("? OpenAI client initialized")
+        if openai_api_key and openai_api_key != "your_openai_api_key_here" and OPENAI_AVAILABLE:
+            try:
+                self.openai_client = OpenAI(api_key=openai_api_key)
+                logger.info("? OpenAI client initialized")
+            except Exception as e:
+                logger.error(f"Failed to initialize OpenAI client: {e}")
         else:
-            logger.warning("??  OpenAI API key not found - using fallback analysis")
+            logger.warning("?? OpenAI API key not found or not available - using fallback analysis")
         
         # Initialize Weaviate vector database (optional)
         if WEAVIATE_AVAILABLE:
@@ -174,6 +185,9 @@ class GraphRAGEngine:
     
     async def _openai_analysis(self, symptoms: List[str], patient_info: Dict = None, follow_up_answers: Dict = None) -> Optional[Dict[str, Any]]:
         """Use OpenAI for medical triage analysis"""
+        if not self.openai_client or not OPENAI_AVAILABLE:
+            return None
+            
         try:
             # Construct prompt with medical knowledge context
             context = self._build_medical_context(symptoms)

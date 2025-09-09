@@ -1,4 +1,4 @@
-from twilio.twiml.voice_response import VoiceResponse
+﻿from twilio.twiml.voice_response import VoiceResponse
 from twilio.rest import Client
 import os
 import logging
@@ -13,6 +13,13 @@ class PhoneHandler:
         self.conversation_manager = conversation_manager
         self.twilio_client = None
         
+        # Dynamic base URL
+        self.base_url = os.getenv("VERCEL_URL", "https://med-triage-ai-git-master-varuntej07s-projects.vercel.app/")
+        if not self.base_url.endswith('/'):
+            self.base_url += '/'
+        
+        logger.info(f"📞 Using base URL: {self.base_url}")
+        
         # Initialize Twilio client if credentials are available
         account_sid = os.getenv("TWILIO_ACCOUNT_SID")
         auth_token = os.getenv("TWILIO_AUTH_TOKEN")
@@ -20,11 +27,11 @@ class PhoneHandler:
         if account_sid and auth_token:
             try:
                 self.twilio_client = Client(account_sid, auth_token)
-                logger.info("? Twilio client initialized")
+                logger.info("✅ Twilio client initialized")
             except Exception as e:
                 logger.error(f"Failed to initialize Twilio client: {e}")
         else:
-            logger.warning("??  Twilio credentials not found - calls will use demo responses")
+            logger.warning("⚠️ Twilio credentials not found - calls will use demo responses")
     
     async def handle_incoming_call(self, form_data: Dict[str, Any]) -> VoiceResponse:
         """Handle incoming phone call from Twilio"""
@@ -43,9 +50,7 @@ class PhoneHandler:
             
             # Welcome message
             welcome_message = (
-                "Hello, you've reached MedTriageAI, an AI medical triage service. "
-                "I'm here to help assess your symptoms and guide you to appropriate care. "
-                "Please describe what's bothering you today."
+                "Hello, you've reached MedTriageAI, Please describe what's bothering you today."
             )
             
             response.say(welcome_message, voice="alice")
@@ -55,9 +60,10 @@ class PhoneHandler:
                 input="speech",
                 timeout=10,
                 speech_timeout="auto",
-                action="/voice/gather",
+                action=f"{self.base_url}voice/gather",
                 method="POST"
             )
+            gather.say("I'm listening. Please describe your symptoms", voice="alice")
             
             # Fallback if no input received
             response.say("I didn't hear anything. Please call back if you need medical assistance.")
@@ -116,7 +122,7 @@ class PhoneHandler:
                 input="speech",
                 timeout=5,
                 speech_timeout="auto",
-                action="/voice/gather",
+                action=f"{self.base_url}voice/gather",
                 method="POST"
             )
             gather.say("Is there anything else I can help you with today?")
@@ -133,7 +139,7 @@ class PhoneHandler:
                 input="speech",
                 timeout=15,
                 speech_timeout="auto",
-                action="/voice/gather",
+                action=f"{self.base_url}voice/gather",
                 method="POST"
             )
             
@@ -144,7 +150,7 @@ class PhoneHandler:
                 input="speech",
                 timeout=10,
                 speech_timeout="auto",
-                action="/voice/gather",
+                action=f"{self.base_url}voice/gather",
                 method="POST"
             )
             
@@ -174,7 +180,7 @@ class PhoneHandler:
             input="speech",
             timeout=10,
             speech_timeout="auto",
-            action="/voice/gather",
+            action=f"{self.base_url}voice/gather",
             method="POST"
         )
         
