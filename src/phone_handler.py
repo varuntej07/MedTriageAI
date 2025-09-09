@@ -13,11 +13,14 @@ class PhoneHandler:
         self.conversation_manager = conversation_manager
         self.twilio_client = None
         
-        # Dynamic base URL
-        self.base_url = os.getenv("VERCEL_URL", "https://med-triage-ai-git-master-varuntej07s-projects.vercel.app/")
-        if not self.base_url.endswith('/'):
-            self.base_url += '/'
-        
+        raw = os.getenv("PUBLIC_BASE_URL") or os.getenv("VERCEL_URL") or ""
+        if raw.startswith("http"):
+            self.base_url = raw.rstrip("/")
+        elif raw:
+            self.base_url = f"https://{raw}".rstrip("/")
+        else:
+            self.base_url = "https://med-triage-ai-git-master-varuntej07s-projects.vercel.app"
+
         logger.info(f"📞 Using base URL: {self.base_url}")
         
         # Initialize Twilio client if credentials are available
@@ -60,7 +63,7 @@ class PhoneHandler:
                 input="speech",
                 timeout=10,
                 speech_timeout="auto",
-                action=f"{self.base_url}voice/gather",
+                action=f"{self.base_url}/voice/gather",
                 method="POST"
             )
             gather.say("I'm listening. Please describe your symptoms", voice="alice")
