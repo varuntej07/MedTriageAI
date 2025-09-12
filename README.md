@@ -1,8 +1,11 @@
-# MedTriageAI ??
+PS - This project was built as part of GitHub x Microsoft Hack Day on September 8
 
-An AI-powered medical triage system that receives phone calls, analyzes symptoms using Microsoft GraphRAG, and provides explainable medical recommendations.
+# MedTriageAI
+A voice-activated AI medical triage system that you can literally call on the phone (call +1 8337512248) and it instantly analyzes your symptoms to detect medical emergencies and provide intelligent health guidance. 
+currently answers only basic info for MVP, thought this would be a good idea for using GraphRAG in the long run
 
-## ?? Features
+
+## Features
 
 - **Phone Integration**: Twilio Voice API for handling phone calls
 - **AI Analysis**: Microsoft GraphRAG for medical knowledge reasoning
@@ -10,7 +13,7 @@ An AI-powered medical triage system that receives phone calls, analyzes symptoms
 - **Conversation Management**: State-driven conversation flow
 - **Safety-First**: Always errs on the side of caution with appropriate disclaimers
 
-## ??? Architecture
+## Architecture
 
 The system consists of four main components:
 
@@ -34,7 +37,7 @@ The system consists of four main components:
 - Emergency trigger detection rules
 - Risk stratification and triage logic
 
-## ?? Setup
+## Setup
 
 1. **Install Dependencies**
 ```bash
@@ -57,13 +60,6 @@ python main.py
 
 The system will start on `http://localhost:8000`
 
-## ?? Testing
-
-Run integration tests to verify all components:
-```bash
-python test_integration.py
-```
-
 ## ?? API Endpoints
 
 - `GET /` - System status and information
@@ -73,31 +69,7 @@ python test_integration.py
 - `GET /demo/test-emergency` - Demo emergency detection
 - `GET /demo/test-graphrag` - Demo GraphRAG analysis
 
-## ?? Emergency Detection
-
-The system automatically detects medical emergencies based on:
-- **Chest Pain + Additional Symptoms**: Sweating, radiating pain, nausea
-- **Stroke Indicators**: Confusion, weakness, speech problems, sudden severe headache
-- **Severe Allergic Reactions**: Difficulty breathing, swelling, hives
-- **Breathing Difficulties**: Severe shortness of breath, chest pain
-- **Mental Health Crises**: Suicidal thoughts or ideation
-
-## ?? Conversation Flow
-
-1. **Greeting**: Welcome and initial symptom gathering
-2. **Symptom Collection**: Extract and analyze reported symptoms
-3. **Follow-up Questions**: AI-generated targeted questions
-4. **Analysis**: GraphRAG-powered medical reasoning
-5. **Recommendation**: Clear next steps with explanations
-
-## ?? Safety & Disclaimers
-
-- ?? **Not a Medical Diagnosis**: This system provides triage guidance only
-- ?? **Emergency Protocol**: Always directs to 911 for emergencies
-- ????? **Professional Care**: Recommends consulting healthcare providers
-- ??? **Conservative Approach**: Errs on the side of caution
-
-## ?? Example Usage
+## Example Usage
 
 ### Emergency Scenario
 ```
@@ -121,18 +93,5 @@ The system uses a medical knowledge graph with:
 - **Reasoning**: Graph traversal for symptom analysis
 - **Fallback**: Local analysis when OpenAI is unavailable
 
-## ?? Development Status
-
-? Core medical triage functionality  
-? Emergency detection system  
-? Twilio voice integration  
-? GraphRAG knowledge reasoning  
-? Conversation state management  
-? Comprehensive testing  
-
-## ?? License
-
+## License
 This project is for educational and research purposes. Not intended for production medical use without proper medical oversight and validation.
-
----
-**?? MEDICAL DISCLAIMER**: This system is for informational purposes only and does not constitute medical advice, diagnosis, or treatment. Always consult with qualified healthcare professionals for proper medical evaluation and care.
